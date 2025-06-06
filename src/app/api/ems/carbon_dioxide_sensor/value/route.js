@@ -1,10 +1,19 @@
 ﻿import { connectDB } from "@/lib/db";
+import toIST from "@/utils/toIST";
 import EmsCarbonDioxideSensor from "@/models/EmsCarbonDioxideSensor";
 
 export async function GET() {
   await connectDB();
-  const data = await EmsCarbonDioxideSensor.find().sort({ createdAt: -1 }).limit(50);
-  return Response.json(data);
+
+  const data = await EmsCarbonDioxideSensor.find().sort({ createdAt: -1 }).limit(50).lean();
+
+  const formattedData = data.map(doc => ({
+    ...doc,
+    createdAtIST: toIST(doc.createdAt),
+    updatedAtIST: toIST(doc.updatedAt),
+  }));
+
+  return Response.json(formattedData);
 }
 
 export async function POST(req) {
