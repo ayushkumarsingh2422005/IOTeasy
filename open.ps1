@@ -1,0 +1,39 @@
+# Paste your URLs below
+$urls = @(
+    "https://iot-easy.vercel.app/api/nfads/water_temperature_sensor/value",
+    "https://iot-easy.vercel.app/api/nfads/ph_Sensor/value",
+    "https://iot-easy.vercel.app/api/nfads/tds_sensor/value",
+    "https://iot-easy.vercel.app/api/nfads/ec_sensor/value",
+    "https://iot-easy.vercel.app/api/nfads/peristaltic_pump_a/value",
+    "https://iot-easy.vercel.app/api/nfads/peristaltic_pump_b/value",
+    "https://iot-easy.vercel.app/api/nfads/peristaltic_pump_phup/value",
+    "https://iot-easy.vercel.app/api/nfads/peristaltic_pump_phdown/value",
+    "https://iot-easy.vercel.app/api/nfads/water_pump/value",
+    "https://iot-easy.vercel.app/api/nfads/solenoid_valve/value",
+    "https://iot-easy.vercel.app/api/nfads/peltier_module/value",
+    "https://iot-easy.vercel.app/api/nfads/compressor_module/value",
+    "https://iot-easy.vercel.app/api/nfads/oled_display_nfads/value",
+    "https://iot-easy.vercel.app/api/nfads/water_flow_meter/value",
+    "https://iot-easy.vercel.app/api/lms/ldr_sensor/value",
+    "https://iot-easy.vercel.app/api/lms/bh1750_sensor/value",
+    "https://iot-easy.vercel.app/api/lms/tsl2591_sensor/value",
+    "https://iot-easy.vercel.app/api/lms/as7265x/value",
+    "https://iot-easy.vercel.app/api/lms/grow_lights_a/value",
+    "https://iot-easy.vercel.app/api/lms/grow_lights_b/value",
+    "https://iot-easy.vercel.app/api/lms/grow_lights_c/value",
+    "https://iot-easy.vercel.app/api/lms/dimmable_module/value",
+    "https://iot-easy.vercel.app/api/lms/oled_module_lms/value",
+    "https://iot-easy.vercel.app/api/ems/dht22_temp/value",
+    "https://iot-easy.vercel.app/api/ems/dht22_moisture/value",
+    "https://iot-easy.vercel.app/api/ems/pressure_sensor/value",
+    "https://iot-easy.vercel.app/api/ems/oxygen_sensor/value",
+    "https://iot-easy.vercel.app/api/ems/carbon_dioxide_sensor/value",
+    "https://iot-easy.vercel.app/api/ems/indoor_cooling_system/value",
+    "https://iot-easy.vercel.app/api/ems/exhaust_fan/value",
+    "https://iot-easy.vercel.app/api/ems/oled_module_ems/value",
+    "https://iot-easy.vercel.app/api/ems/diaphragm_pump/value"
+)
+
+foreach ($url in $urls) {
+    Start-Process $url
+}
