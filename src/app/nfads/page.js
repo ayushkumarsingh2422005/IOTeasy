@@ -68,6 +68,11 @@ export default function NfadsPage() {
     oled: 'OLED Display'
   };
 
+  const formatDateTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+  };
+
   const fetchData = async () => {
     try {
       setIsLoading(true);
@@ -107,7 +112,7 @@ export default function NfadsPage() {
       
       // Process historical data for the chart
       const processedData = historicalData.map(item => ({
-        time: new Date(item.createdAtIST).toLocaleTimeString(),
+        time: formatDateTime(item.createdAtIST),
         ph: item.ph,
         ec: item.ec,
         tds: item.tds,
@@ -201,8 +206,12 @@ export default function NfadsPage() {
                 <XAxis 
                   dataKey="time"
                   stroke="#9CA3AF"
-                  fontSize={12}
+                  fontSize={10}
                   tickMargin={10}
+                  angle={-90}
+                  textAnchor="end"
+                  height={120}
+                  interval={0}
                 />
                 <YAxis
                   stroke="#9CA3AF"

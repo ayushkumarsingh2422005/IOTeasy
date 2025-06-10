@@ -63,6 +63,11 @@ export default function EmsPage() {
     oled: 'OLED Display'
   };
 
+  const formatDateTime = (timestamp) => {
+    const date = new Date(timestamp);
+    return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -101,7 +106,7 @@ export default function EmsPage() {
         
         // Process historical data for the chart
         const processedData = historicalData.map(item => ({
-          time: new Date(item.createdAtIST).toLocaleTimeString(),
+          time: formatDateTime(item.createdAtIST),
           dht22Temp: item.dht22Temp,
           dht22Moisture: item.dht22Moisture,
           carbonDioxide: item.carbonDioxide,
@@ -196,8 +201,12 @@ export default function EmsPage() {
                 <XAxis 
                   dataKey="time"
                   stroke="#9CA3AF"
-                  fontSize={12}
+                  fontSize={10}
                   tickMargin={10}
+                  angle={-90}
+                  textAnchor="end"
+                  height={120}
+                  interval={0}
                 />
                 <YAxis
                   stroke="#9CA3AF"
