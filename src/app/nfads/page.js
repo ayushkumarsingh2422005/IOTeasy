@@ -42,6 +42,7 @@ const SensorButton = ({ name, isSelected, onClick, unit }) => (
 
 export default function NfadsPage() {
   const [data, setData] = useState([]);
+  const [deviceStates, setDeviceStates] = useState(null);
   const [selectedSensor, setSelectedSensor] = useState('ph');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -78,59 +79,61 @@ export default function NfadsPage() {
         return;
       }
 
-      console.log('Fetching NFADS data...');
-      const response = await fetch('/api/nfads', {
+      // Fetch historical data for graph
+      const historicalResponse = await fetch('/api/nfads', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       
-      if (!response.ok) {
-        if (response.status === 401) {
-          console.log('Unauthorized access, redirecting to login...');
+      // Fetch recent data for device states
+      const recentResponse = await fetch('/api/nfads/recent', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!historicalResponse.ok || !recentResponse.ok) {
+        if (historicalResponse.status === 401 || recentResponse.status === 401) {
           localStorage.removeItem('token');
           router.push('/');
           return;
         }
-        const errorText = await response.text();
-        console.error('API Error:', response.status, errorText);
-        throw new Error(`Failed to fetch data: ${response.status} ${errorText}`);
+        throw new Error('Failed to fetch data');
       }
       
-      const result = await response.json();
-      console.log('NFADS data received:', result);
+      const historicalData = await historicalResponse.json();
+      const recentData = await recentResponse.json();
       
-      if (!Array.isArray(result)) {
-        console.error('Invalid data format:', result);
-        throw new Error('Invalid data format received from server');
-      }
-
-      // Process data for the chart
-      const processedData = result.map(item => ({
+      // Process historical data for the chart
+      const processedData = historicalData.map(item => ({
         time: new Date(item.createdAtIST).toLocaleTimeString(),
         ph: item.ph,
         ec: item.ec,
         tds: item.tds,
         waterTemp: item.waterTemp,
         waterFlow: item.waterFlow,
-        // Add device states
-        waterPump: item.waterPump,
-        solenoidValve: item.solenoidValve,
-        peristalticPumpA: item.peristalticPumpA,
-        peristalticPumpB: item.peristalticPumpB,
-        peristalticPumpPhup: item.peristalticPumpPhup,
-        peristalticPumpPhdown: item.peristalticPumpPhdown,
-        compressor: item.compressor,
-        peltier: item.peltier,
-        oled: item.oled,
         createdAtIST: item.createdAtIST
       })).reverse();
 
-      console.log('Processed data:', processedData);
+      // Set recent device states
+      const currentStates = {
+        waterPump: recentData.waterPump,
+        solenoidValve: recentData.solenoidValve,
+        peristalticPumpA: recentData.peristalticPumpA,
+        peristalticPumpB: recentData.peristalticPumpB,
+        peristalticPumpPhup: recentData.peristalticPumpPhup,
+        peristalticPumpPhdown: recentData.peristalticPumpPhdown,
+        compressor: recentData.compressor,
+        peltier: recentData.peltier,
+        oled: recentData.oled,
+        createdAtIST: recentData.createdAtIST
+      };
+
       setData(processedData);
+      setDeviceStates(currentStates);
       setError(null);
     } catch (err) {
-      console.error('Error in fetchData:', err);
       setError(err.message);
       if (err.message.includes('unauthorized')) {
         localStorage.removeItem('token');
@@ -156,7 +159,7 @@ export default function NfadsPage() {
           router.push('/');
         }}
         isRefreshing={isLoading}
-        lastRefresh={data[0]?.createdAtIST ? new Date(data[0].createdAtIST) : null}
+        lastRefresh={deviceStates?.createdAtIST ? new Date(deviceStates.createdAtIST) : null}
       />
 
       <div className="h-[calc(100vh-3.5rem)] grid grid-cols-12 gap-2 p-2">
@@ -239,12 +242,12 @@ export default function NfadsPage() {
 
         {/* Right Column - Device Status */}
         <div className="col-span-2 bg-gray-800 rounded-lg p-2 flex flex-col gap-1">
-          {Object.entries(devices).map(([key, name]) => (
+          {deviceStates && Object.entries(devices).map(([key, name]) => (
             <DeviceStatus
               key={key}
               name={name}
-              status={data[0]?.[key]}
-              lastUpdate={data[0]?.createdAtIST}
+              status={deviceStates[key]}
+              lastUpdate={deviceStates.createdAtIST}
             />
           ))}
         </div>

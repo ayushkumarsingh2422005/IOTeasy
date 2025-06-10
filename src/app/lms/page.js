@@ -42,6 +42,7 @@ const SensorButton = ({ name, isSelected, onClick, unit }) => (
 
 export default function LmsPage() {
   const [data, setData] = useState([]);
+  const [deviceStates, setDeviceStates] = useState(null);
   const [selectedSensor, setSelectedSensor] = useState('bh1750');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -70,14 +71,22 @@ export default function LmsPage() {
           return;
         }
 
-        const response = await fetch('/api/lms', {
+        // Fetch historical data for graph
+        const historicalResponse = await fetch('/api/lms', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
         
-        if (!response.ok) {
-          if (response.status === 401) {
+        // Fetch recent data for device states
+        const recentResponse = await fetch('/api/lms/recent', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!historicalResponse.ok || !recentResponse.ok) {
+          if (historicalResponse.status === 401 || recentResponse.status === 401) {
             localStorage.removeItem('token');
             router.push('/');
             return;
@@ -85,23 +94,29 @@ export default function LmsPage() {
           throw new Error('Failed to fetch data');
         }
         
-        const result = await response.json();
+        const historicalData = await historicalResponse.json();
+        const recentData = await recentResponse.json();
         
-        // Process data for the chart
-        const processedData = result.map(item => ({
+        // Process historical data for the chart
+        const processedData = historicalData.map(item => ({
           time: new Date(item.createdAtIST).toLocaleTimeString(),
           bh1750: item.bh1750,
           as7265x: item.as7265x,
           tsl2591: item.tsl2591,
           ldr: item.ldr,
-          // Add device states
-          growLights: item.growLights,
-          dimmable: item.dimmable,
-          oled: item.oled,
           createdAtIST: item.createdAtIST
         })).reverse();
 
+        // Set recent device states
+        const currentStates = {
+          growLights: recentData.growLights,
+          dimmable: recentData.dimmable,
+          oled: recentData.oled,
+          createdAtIST: recentData.createdAtIST
+        };
+
         setData(processedData);
+        setDeviceStates(currentStates);
         setError(null);
       } catch (err) {
         setError(err.message);
@@ -139,7 +154,7 @@ export default function LmsPage() {
           router.push('/');
         }}
         isRefreshing={isLoading}
-        lastRefresh={data[0]?.time ? new Date(data[0].time) : null}
+        lastRefresh={deviceStates?.createdAtIST ? new Date(deviceStates.createdAtIST) : null}
       />
 
       <div className="h-[calc(100vh-3.5rem)] grid grid-cols-12 gap-2 p-2">
@@ -218,12 +233,12 @@ export default function LmsPage() {
 
         {/* Right Column - Device Status */}
         <div className="col-span-2 bg-gray-800 rounded-lg p-2 flex flex-col gap-1">
-          {Object.entries(devices).map(([key, name]) => (
+          {deviceStates && Object.entries(devices).map(([key, name]) => (
             <DeviceStatus
               key={key}
               name={name}
-              status={data[0]?.[key]}
-              lastUpdate={data[0]?.createdAtIST}
+              status={deviceStates[key]}
+              lastUpdate={deviceStates.createdAtIST}
             />
           ))}
         </div>
