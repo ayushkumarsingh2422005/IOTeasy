@@ -1,35 +1,254 @@
 'use client';
 
-import SystemLayout from '@/components/SystemLayout';
+import { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useRouter } from 'next/navigation';
+import Topbar from '@/components/Topbar';
 
-const inputDevices = [
-  { id: 'ph', name: 'pH Level', unit: 'pH' },
-  { id: 'ec', name: 'EC', unit: 'mS/cm' },
-  { id: 'tds', name: 'TDS', unit: 'ppm' },
-  { id: 'waterTemp', name: 'Water Temperature', unit: '°C' },
-  { id: 'waterFlow', name: 'Flow Rate', unit: 'L/min' }
-];
+const DeviceStatus = ({ name, status, lastUpdate }) => (
+  <div className={`flex items-center justify-between p-2 rounded-md ${status ? 'bg-green-900/20' : 'bg-gray-800'}`}>
+    <div className="flex items-center space-x-2">
+      <div className={`w-2 h-2 rounded-full ${status ? 'bg-green-500' : 'bg-gray-600'}`} />
+      <span className="text-sm text-gray-300">{name}</span>
+    </div>
+    <div className="flex items-center">
+      <span className={`text-xs px-1.5 py-0.5 rounded ${
+        status ? 'bg-green-900/50 text-green-100' : 'bg-gray-700/50 text-gray-400'
+      }`}>
+        {status ? 'ON' : 'OFF'}
+      </span>
+      {lastUpdate && (
+        <span className="text-xs text-gray-500 ml-2">
+          {new Date(lastUpdate).toLocaleTimeString()}
+        </span>
+      )}
+    </div>
+  </div>
+);
 
-const outputDevices = [
-  { id: 'waterPump', name: 'Water Pump' },
-  { id: 'solenoidValve', name: 'Solenoid Valve' },
-  { id: 'peristalticPumpA', name: 'Pump A' },
-  { id: 'peristalticPumpB', name: 'Pump B' },
-  { id: 'peristalticPumpPhup', name: 'pH Up Pump' },
-  { id: 'peristalticPumpPhdown', name: 'pH Down Pump' },
-  { id: 'compressor', name: 'Compressor' },
-  { id: 'peltier', name: 'Peltier Module' },
-  { id: 'oled', name: 'OLED Display' }
-];
+const SensorButton = ({ name, isSelected, onClick, unit }) => (
+  <button
+    onClick={onClick}
+    className={`w-full p-3 rounded-lg mb-2 text-left transition-colors ${
+      isSelected 
+        ? 'bg-blue-900 text-blue-100 border-l-4 border-blue-500' 
+        : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+    }`}
+  >
+    <div className="font-medium">{name}</div>
+    <div className="text-xs opacity-75">Unit: {unit}</div>
+  </button>
+);
 
-export default function NFADSPage() {
+export default function NfadsPage() {
+  const [data, setData] = useState([]);
+  const [selectedSensor, setSelectedSensor] = useState('ph');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const router = useRouter();
+
+  const sensors = {
+    ph: { name: 'pH Level', unit: 'pH' },
+    ec: { name: 'EC', unit: 'mS/cm' },
+    tds: { name: 'TDS', unit: 'ppm' },
+    waterTemp: { name: 'Water Temp', unit: '°C' },
+    waterFlow: { name: 'Flow Rate', unit: 'L/min' }
+  };
+
+  const devices = {
+    waterPump: 'Water Pump',
+    solenoidValve: 'Valve',
+    peristalticPumpA: 'Pump A',
+    peristalticPumpB: 'Pump B',
+    peristalticPumpPhup: 'pH Up Pump',
+    peristalticPumpPhdown: 'pH Down Pump',
+    compressor: 'Compressor',
+    peltier: 'Peltier',
+    oled: 'OLED Display'
+  };
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/');
+        return;
+      }
+
+      console.log('Fetching NFADS data...');
+      const response = await fetch('/api/nfads', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          console.log('Unauthorized access, redirecting to login...');
+          localStorage.removeItem('token');
+          router.push('/');
+          return;
+        }
+        const errorText = await response.text();
+        console.error('API Error:', response.status, errorText);
+        throw new Error(`Failed to fetch data: ${response.status} ${errorText}`);
+      }
+      
+      const result = await response.json();
+      console.log('NFADS data received:', result);
+      
+      if (!Array.isArray(result)) {
+        console.error('Invalid data format:', result);
+        throw new Error('Invalid data format received from server');
+      }
+
+      // Process data for the chart
+      const processedData = result.map(item => ({
+        time: new Date(item.createdAtIST).toLocaleTimeString(),
+        ph: item.ph,
+        ec: item.ec,
+        tds: item.tds,
+        waterTemp: item.waterTemp,
+        waterFlow: item.waterFlow,
+        // Add device states
+        waterPump: item.waterPump,
+        solenoidValve: item.solenoidValve,
+        peristalticPumpA: item.peristalticPumpA,
+        peristalticPumpB: item.peristalticPumpB,
+        peristalticPumpPhup: item.peristalticPumpPhup,
+        peristalticPumpPhdown: item.peristalticPumpPhdown,
+        compressor: item.compressor,
+        peltier: item.peltier,
+        oled: item.oled,
+        createdAtIST: item.createdAtIST
+      })).reverse();
+
+      console.log('Processed data:', processedData);
+      setData(processedData);
+      setError(null);
+    } catch (err) {
+      console.error('Error in fetchData:', err);
+      setError(err.message);
+      if (err.message.includes('unauthorized')) {
+        localStorage.removeItem('token');
+        router.push('/');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <SystemLayout
-      title="Nutrient Film Aquaponic Distribution System (NFADS)"
-      description="Comprehensive nutrient and water management system monitoring pH, EC, TDS, and water conditions. Features automated nutrient dosing, water circulation, and temperature control for optimal nutrient delivery."
-      inputDevices={inputDevices}
-      outputDevices={outputDevices}
-      apiEndpoint="/api/nfads"
-    />
+    <div className="min-h-screen bg-gray-900">
+      <Topbar 
+        onRefresh={fetchData}
+        onLogout={() => {
+          localStorage.removeItem('token');
+          router.push('/');
+        }}
+        isRefreshing={isLoading}
+        lastRefresh={data[0]?.createdAtIST ? new Date(data[0].createdAtIST) : null}
+      />
+
+      <div className="h-[calc(100vh-3.5rem)] grid grid-cols-12 gap-2 p-2">
+        {/* Left Column - Sensor Selection */}
+        <div className="col-span-2 bg-gray-800 rounded-lg p-2 flex flex-col gap-1">
+          {Object.entries(sensors).map(([key, { name, unit }]) => (
+            <button
+              key={key}
+              onClick={() => setSelectedSensor(key)}
+              className={`text-left px-2 py-1.5 rounded text-sm transition-colors ${
+                selectedSensor === key
+                  ? 'bg-blue-900/50 text-blue-100'
+                  : 'text-gray-300 hover:bg-gray-700'
+              }`}
+            >
+              {name} ({unit})
+            </button>
+          ))}
+        </div>
+
+        {/* Middle Column - Graph */}
+        <div className="col-span-8 bg-gray-800 rounded-lg p-2">
+          {isLoading && !data.length ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+            </div>
+          ) : error ? (
+            <div className="h-full flex items-center justify-center text-red-400">
+              {error}
+            </div>
+          ) : data.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-gray-400">
+              No data available
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="time"
+                  stroke="#9CA3AF"
+                  fontSize={12}
+                  tickMargin={10}
+                />
+                <YAxis
+                  stroke="#9CA3AF"
+                  fontSize={12}
+                  tickMargin={10}
+                  label={{ 
+                    value: sensors[selectedSensor].unit,
+                    angle: -90,
+                    position: 'insideLeft',
+                    fill: '#9CA3AF',
+                    fontSize: 12
+                  }}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1F2937',
+                    border: '1px solid #374151',
+                    borderRadius: '0.375rem',
+                  }}
+                  labelStyle={{ color: '#9CA3AF' }}
+                  itemStyle={{ color: '#60A5FA' }}
+                  formatter={(value) => [`${value} ${sensors[selectedSensor].unit}`, sensors[selectedSensor].name]}
+                />
+                <Line
+                  type="monotone"
+                  dataKey={selectedSensor}
+                  stroke="#60A5FA"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                  name={sensors[selectedSensor].name}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* Right Column - Device Status */}
+        <div className="col-span-2 bg-gray-800 rounded-lg p-2 flex flex-col gap-1">
+          {Object.entries(devices).map(([key, name]) => (
+            <DeviceStatus
+              key={key}
+              name={name}
+              status={data[0]?.[key]}
+              lastUpdate={data[0]?.createdAtIST}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 } 

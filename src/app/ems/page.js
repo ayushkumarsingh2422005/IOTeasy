@@ -1,30 +1,228 @@
 'use client';
 
-import SystemLayout from '@/components/SystemLayout';
+import { useState, useEffect } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useRouter } from 'next/navigation';
+import Topbar from '@/components/Topbar';
 
-const inputDevices = [
-  { id: 'dht22Temp', name: 'Temperature', unit: '°C' },
-  { id: 'dht22Moisture', name: 'Humidity', unit: '%' },
-  { id: 'carbonDioxide', name: 'CO2', unit: 'ppm' },
-  { id: 'oxygen', name: 'O2', unit: '%' },
-  { id: 'pressure', name: 'Pressure', unit: 'kPa' }
-];
+const DeviceStatus = ({ name, status, lastUpdate }) => (
+  <div className={`flex items-center justify-between p-2 rounded-md ${status ? 'bg-green-900/20' : 'bg-gray-800'}`}>
+    <div className="flex items-center space-x-2">
+      <div className={`w-2 h-2 rounded-full ${status ? 'bg-green-500' : 'bg-gray-600'}`} />
+      <span className="text-sm text-gray-300">{name}</span>
+    </div>
+    <div className="flex items-center">
+      <span className={`text-xs px-1.5 py-0.5 rounded ${
+        status ? 'bg-green-900/50 text-green-100' : 'bg-gray-700/50 text-gray-400'
+      }`}>
+        {status ? 'ON' : 'OFF'}
+      </span>
+      {lastUpdate && (
+        <span className="text-xs text-gray-500 ml-2">
+          {new Date(lastUpdate).toLocaleTimeString()}
+        </span>
+      )}
+    </div>
+  </div>
+);
 
-const outputDevices = [
-  { id: 'exhaustFan', name: 'Exhaust Fan' },
-  { id: 'indoorCooling', name: 'Cooling System' },
-  { id: 'diaphragmPump', name: 'Diaphragm Pump' },
-  { id: 'oled', name: 'OLED Display' }
-];
+const SensorButton = ({ name, isSelected, onClick, unit }) => (
+  <button
+    onClick={onClick}
+    className={`w-full p-3 rounded-lg mb-2 text-left transition-colors ${
+      isSelected 
+        ? 'bg-blue-900 text-blue-100 border-l-4 border-blue-500' 
+        : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
+    }`}
+  >
+    <div className="font-medium">{name}</div>
+    <div className="text-xs opacity-75">Unit: {unit}</div>
+  </button>
+);
 
-export default function EMSPage() {
+export default function EmsPage() {
+  const [data, setData] = useState([]);
+  const [selectedSensor, setSelectedSensor] = useState('dht22Temp');
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const router = useRouter();
+
+  const sensors = {
+    dht22Temp: { name: 'Temperature', unit: '°C' },
+    dht22Moisture: { name: 'Humidity', unit: '%' },
+    carbonDioxide: { name: 'CO₂', unit: 'ppm' },
+    oxygen: { name: 'O₂', unit: '%' },
+    pressure: { name: 'Pressure', unit: 'kPa' }
+  };
+
+  const devices = {
+    exhaustFan: 'Exhaust Fan',
+    indoorCooling: 'Cooling System',
+    diaphragmPump: 'Diaphragm Pump',
+    oled: 'OLED Display'
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const token = localStorage.getItem('token');
+        if (!token) {
+          router.push('/');
+          return;
+        }
+
+        const response = await fetch('/api/ems', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
+        if (!response.ok) {
+          if (response.status === 401) {
+            localStorage.removeItem('token');
+            router.push('/');
+            return;
+          }
+          throw new Error('Failed to fetch data');
+        }
+        
+        const result = await response.json();
+        
+        // Process data for the chart
+        const processedData = result.map(item => ({
+          time: new Date(item.createdAtIST).toLocaleTimeString(),
+          dht22Temp: item.dht22Temp,
+          dht22Moisture: item.dht22Moisture,
+          carbonDioxide: item.carbonDioxide,
+          oxygen: item.oxygen,
+          pressure: item.pressure,
+          // Add device states
+          exhaustFan: item.exhaustFan,
+          indoorCooling: item.indoorCooling,
+          diaphragmPump: item.diaphragmPump,
+          oled: item.oled,
+          createdAtIST: item.createdAtIST
+        })).reverse();
+
+        setData(processedData);
+        setError(null);
+      } catch (err) {
+        setError(err.message);
+        if (err.message.includes('unauthorized')) {
+          localStorage.removeItem('token');
+          router.push('/');
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+    const interval = setInterval(fetchData, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white p-4">
+        <div className="text-red-400">Error: {error}</div>
+      </div>
+    );
+  }
+
   return (
-    <SystemLayout
-      title="Environmental Monitoring System (EMS)"
-      description="Monitor and control environmental conditions including temperature, humidity, CO₂, O₂, and air pressure. Features automated climate control through exhaust fans and cooling systems."
-      inputDevices={inputDevices}
-      outputDevices={outputDevices}
-      apiEndpoint="/api/ems"
-    />
+    <div className="min-h-screen bg-gray-900">
+      <Topbar 
+        onRefresh={() => {
+          const token = localStorage.getItem('token');
+          if (token) fetchData();
+        }}
+        onLogout={() => {
+          localStorage.removeItem('token');
+          router.push('/');
+        }}
+        isRefreshing={isLoading}
+        lastRefresh={data[0]?.time ? new Date(data[0].time) : null}
+      />
+
+      <div className="h-[calc(100vh-3.5rem)] grid grid-cols-12 gap-2 p-2">
+        {/* Left Column - Sensor Selection */}
+        <div className="col-span-2 bg-gray-800 rounded-lg p-2 flex flex-col gap-1">
+          {Object.entries(sensors).map(([key, { name, unit }]) => (
+            <button
+              key={key}
+              onClick={() => setSelectedSensor(key)}
+              className={`text-left px-2 py-1.5 rounded text-sm transition-colors ${
+                selectedSensor === key
+                  ? 'bg-blue-900/50 text-blue-100'
+                  : 'text-gray-300 hover:bg-gray-700'
+              }`}
+            >
+              {name} ({unit})
+            </button>
+          ))}
+        </div>
+
+        {/* Middle Column - Graph */}
+        <div className="col-span-8 bg-gray-800 rounded-lg p-2">
+          {isLoading ? (
+            <div className="h-full flex items-center justify-center">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500" />
+            </div>
+          ) : error ? (
+            <div className="h-full flex items-center justify-center text-red-400">
+              {error}
+            </div>
+          ) : (
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={data}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                <XAxis 
+                  dataKey="time"
+                  stroke="#9CA3AF"
+                  fontSize={12}
+                  tickMargin={10}
+                />
+                <YAxis
+                  stroke="#9CA3AF"
+                  fontSize={12}
+                  tickMargin={10}
+                />
+                <Tooltip
+                  contentStyle={{
+                    backgroundColor: '#1F2937',
+                    border: '1px solid #374151',
+                    borderRadius: '0.375rem',
+                  }}
+                  labelStyle={{ color: '#9CA3AF' }}
+                  itemStyle={{ color: '#60A5FA' }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey={selectedSensor}
+                  stroke="#60A5FA"
+                  strokeWidth={2}
+                  dot={false}
+                  activeDot={{ r: 4 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* Right Column - Device Status */}
+        <div className="col-span-2 bg-gray-800 rounded-lg p-2 flex flex-col gap-1">
+          {Object.entries(devices).map(([key, name]) => (
+            <DeviceStatus
+              key={key}
+              name={name}
+              status={data[0]?.[key]}
+              lastUpdate={data[0]?.createdAtIST}
+            />
+          ))}
+        </div>
+      </div>
+    </div>
   );
 } 
