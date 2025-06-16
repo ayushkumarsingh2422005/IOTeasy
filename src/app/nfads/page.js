@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { useRouter } from 'next/navigation';
 import Topbar from '@/components/Topbar';
 
@@ -111,8 +111,9 @@ export default function NfadsPage() {
       const recentData = await recentResponse.json();
       
       // Process historical data for the chart
+      console.log(historicalData);
       const processedData = historicalData.map(item => ({
-        time: formatDateTime(item.createdAtIST),
+        time: item.createdAtIST,
         ph: item.ph,
         ec: item.ec,
         tds: item.tds,

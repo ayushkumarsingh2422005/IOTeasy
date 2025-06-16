@@ -102,9 +102,10 @@ export default function LmsPage() {
         const historicalData = await historicalResponse.json();
         const recentData = await recentResponse.json();
         
+        console.log(historicalData)
         // Process historical data for the chart
         const processedData = historicalData.map(item => ({
-          time: formatDateTime(item.createdAtIST),
+          time: item.createdAtIST,
           bh1750: item.bh1750,
           as7265x: item.as7265x,
           tsl2591: item.tsl2591,

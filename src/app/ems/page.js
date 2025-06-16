@@ -106,7 +106,7 @@ export default function EmsPage() {
         
         // Process historical data for the chart
         const processedData = historicalData.map(item => ({
-          time: formatDateTime(item.createdAtIST),
+          time: item.createdAtIST,
           dht22Temp: item.dht22Temp,
           dht22Moisture: item.dht22Moisture,
           carbonDioxide: item.carbonDioxide,
