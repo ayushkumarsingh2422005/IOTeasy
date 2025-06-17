@@ -118,7 +118,7 @@ export default function RawDataPage() {
           router.push('/');
         }}
         isRefreshing={isLoading}
-        lastRefresh={data[0]?.createdAtIST ? new Date(data[0].createdAtIST) : null}
+        lastRefresh={data[0]?.createdAtIST}
       />
 
       <div className="p-4">
