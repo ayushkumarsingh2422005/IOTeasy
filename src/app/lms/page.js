@@ -19,7 +19,7 @@ const DeviceStatus = ({ name, status, lastUpdate }) => (
       </span>
       {lastUpdate && (
         <span className="text-xs text-gray-500 ml-2">
-          {new Date(lastUpdate).toLocaleTimeString()}
+          {lastUpdate.split(',')[1].trim()}
         </span>
       )}
     </div>
@@ -160,7 +160,7 @@ export default function LmsPage() {
           router.push('/');
         }}
         isRefreshing={isLoading}
-        lastRefresh={deviceStates?.createdAtIST ? new Date(deviceStates.createdAtIST) : null}
+        lastRefresh={deviceStates?.createdAtIST}
       />
 
       <div className="h-[calc(100vh-3.5rem)] grid grid-cols-12 gap-2 p-2">

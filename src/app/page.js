@@ -12,62 +12,86 @@ const RefreshIcon = () => (
 );
 
 // Dashboard Components
-const SystemCard = ({ title, description, sensorData, deviceStates, onClick }) => (
-  <div 
-    onClick={onClick}
-    className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-all duration-300 border border-gray-700 cursor-pointer"
-  >
-    <div className="flex justify-between items-start mb-2">
-      <h2 className="text-lg font-bold text-gray-100">{title}</h2>
-      <span className="px-2 py-0.5 bg-green-900 text-green-100 rounded-full text-xs font-medium">Active</span>
-    </div>
-    <p className="text-gray-400 text-sm mb-3">{description}</p>
+const SystemCard = ({ title, description, sensorData, deviceStates, onClick }) => {
+  // Function to check if data is active (within 60 seconds)
+  const isDataActive = () => {
+    if (!sensorData || Object.keys(sensorData).length === 0) return false;
     
-    {/* Sensor Readings */}
-    <div className="mb-3">
-      <h3 className="text-xs font-semibold text-gray-400 mb-2">Sensor Readings</h3>
-      <div className="grid grid-cols-3 gap-2">
-        {Object.entries(sensorData).map(([key, data], index) => (
-          <div key={index} className="bg-gray-900 p-2 rounded">
-            <p className="text-xs text-gray-400">{key}</p>
-            <p className="text-sm font-semibold text-gray-100">
-              {data.value}
-              <span className="text-xs text-gray-400 ml-1">{data.unit}</span>
-            </p>
-            <p className="text-xs text-gray-500">
-              {data.time ? new Date(data.time).toLocaleTimeString() : 'No timestamp'}
-            </p>
-          </div>
-        ))}
-      </div>
-    </div>
+    // Get the most recent timestamp from sensor data
+    const timestamps = Object.values(sensorData).map(data => {
+      const dateStr = data.time.split(',')[1].trim();
+      return new Date(dateStr);
+    });
+    
+    const mostRecentTime = new Date(Math.max(...timestamps));
+    const currentTime = new Date();
+    const timeDiffInSeconds = (currentTime - mostRecentTime) / 1000;
+    
+    return timeDiffInSeconds <= 60;
+  };
 
-    {/* Device States */}
-    <div>
-      <h3 className="text-xs font-semibold text-gray-400 mb-2">Device States</h3>
-      <div className="grid grid-cols-3 gap-2">
-        {Object.entries(deviceStates).map(([key, data], index) => (
-          <div key={index} className="flex items-center justify-between bg-gray-900 p-2 rounded">
-            <div>
-              <span className="text-xs text-gray-300">{key}</span>
+  return (
+    <div
+      onClick={onClick}
+      className="bg-gray-800 p-4 rounded-lg hover:bg-gray-700 transition-all duration-300 border border-gray-700 cursor-pointer"
+    >
+      <div className="flex justify-between items-start mb-2">
+        <h2 className="text-lg font-bold text-gray-100">{title}</h2>
+        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
+          isDataActive() 
+            ? 'bg-green-900 text-green-100' 
+            : 'bg-red-900 text-red-100'
+        }`}>
+          {isDataActive() ? 'Active' : 'Inactive'}
+        </span>
+      </div>
+      <p className="text-gray-400 text-sm mb-3">{description}</p>
+
+      {/* Sensor Readings */}
+      <div className="mb-3">
+        <h3 className="text-xs font-semibold text-gray-400 mb-2">Sensor Readings</h3>
+        <div className="grid grid-cols-3 gap-2">
+          {Object.entries(sensorData).map(([key, data], index) => (
+            <div key={index} className="bg-gray-900 p-2 rounded">
+              <p className="text-xs text-gray-400">{key}</p>
+              <p className="text-sm font-semibold text-gray-100">
+                {data.value}
+                <span className="text-xs text-gray-400 ml-1">{data.unit}</span>
+              </p>
               <p className="text-xs text-gray-500">
-                {data.time ? new Date(data.time).toLocaleTimeString() : 'No timestamp'}
+                {data.time.split(',')[1].trim()}
               </p>
             </div>
-            <div className="flex items-center">
-              <div className={`w-1.5 h-1.5 rounded-full mr-1 ${data.value ? 'bg-green-500' : 'bg-gray-600'}`}></div>
-              <span className={`px-1.5 py-0.5 rounded text-xs ${
-                data.value ? 'bg-green-900 text-green-100' : 'bg-gray-700 text-gray-300'
-              }`}>
-                {data.value ? 'ON' : 'OFF'}
-              </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Device States */}
+      <div>
+        <h3 className="text-xs font-semibold text-gray-400 mb-2">Device States</h3>
+        <div className="grid grid-cols-3 gap-2">
+          {Object.entries(deviceStates).map(([key, data], index) => (
+            <div key={index} className="flex items-center justify-between bg-gray-900 p-2 rounded">
+              <div>
+                <span className="text-xs text-gray-300">{key}</span>
+                <p className="text-xs text-gray-500">
+                  {data.time.split(',')[1].trim()}
+                </p>
+              </div>
+              <div className="flex items-center">
+                <div className={`w-1.5 h-1.5 rounded-full mr-1 ${data.value ? 'bg-green-500' : 'bg-gray-600'}`}></div>
+                <span className={`px-1.5 py-0.5 rounded text-xs ${data.value ? 'bg-green-900 text-green-100' : 'bg-gray-700 text-gray-300'
+                  }`}>
+                  {data.value ? 'ON' : 'OFF'}
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function Home() {
   const [username, setUsername] = useState('');
@@ -132,46 +156,46 @@ export default function Home() {
       setSystemData({
         ems: {
           sensorData: {
-            'Temperature': { 
-              value: emsData.dht22Temp || 'N/A', 
+            'Temperature': {
+              value: emsData.dht22Temp || 'N/A',
               unit: '°C',
               time: emsData.createdAtIST
             },
-            'Humidity': { 
-              value: emsData.dht22Moisture || 'N/A', 
+            'Humidity': {
+              value: emsData.dht22Moisture || 'N/A',
               unit: '%',
               time: emsData.createdAtIST
             },
-            'CO2': { 
-              value: emsData.carbonDioxide || 'N/A', 
+            'CO2': {
+              value: emsData.carbonDioxide || 'N/A',
               unit: 'ppm',
               time: emsData.createdAtIST
             },
-            'O2': { 
-              value: emsData.oxygen || 'N/A', 
+            'O2': {
+              value: emsData.oxygen || 'N/A',
               unit: '%',
               time: emsData.createdAtIST
             },
-            'Pressure': { 
-              value: emsData.pressure || 'N/A', 
+            'Pressure': {
+              value: emsData.pressure || 'N/A',
               unit: 'kPa',
               time: emsData.createdAtIST
             }
           },
           deviceStates: {
-            'Exhaust Fan': { 
+            'Exhaust Fan': {
               value: emsData.exhaustFan || false,
               time: emsData.createdAtIST
             },
-            'Cooling System': { 
+            'Cooling System': {
               value: emsData.indoorCooling || false,
               time: emsData.createdAtIST
             },
-            'Diaphragm Pump': { 
+            'Diaphragm Pump': {
               value: emsData.diaphragmPump || false,
               time: emsData.createdAtIST
             },
-            'OLED Display': { 
+            'OLED Display': {
               value: emsData.oled || false,
               time: emsData.createdAtIST
             }
@@ -179,37 +203,37 @@ export default function Home() {
         },
         lms: {
           sensorData: {
-            'Light Intensity': { 
-              value: lmsData.bh1750 || 'N/A', 
+            'Light Intensity': {
+              value: lmsData.bh1750 || 'N/A',
               unit: 'lux',
               time: lmsData.createdAtIST
             },
-            'Spectral': { 
-              value: lmsData.as7265x || 'N/A', 
+            'Spectral': {
+              value: lmsData.as7265x || 'N/A',
               unit: 'nm',
               time: lmsData.createdAtIST
             },
-            'Ambient': { 
-              value: lmsData.tsl2591 || 'N/A', 
+            'Ambient': {
+              value: lmsData.tsl2591 || 'N/A',
               unit: 'lux',
               time: lmsData.createdAtIST
             },
-            'LDR': { 
-              value: lmsData.ldr || 'N/A', 
+            'LDR': {
+              value: lmsData.ldr || 'N/A',
               unit: 'Ω',
               time: lmsData.createdAtIST
             }
           },
           deviceStates: {
-            'Grow Light': { 
+            'Grow Light': {
               value: lmsData.growLights || false,
               time: lmsData.createdAtIST
             },
-            'Dimmer': { 
+            'Dimmer': {
               value: lmsData.dimmable || false,
               time: lmsData.createdAtIST
             },
-            'OLED Display': { 
+            'OLED Display': {
               value: lmsData.oled || false,
               time: lmsData.createdAtIST
             }
@@ -217,66 +241,66 @@ export default function Home() {
         },
         nfads: {
           sensorData: {
-            'pH Level': { 
-              value: nfadsData.ph || 'N/A', 
+            'pH Level': {
+              value: nfadsData.ph || 'N/A',
               unit: 'pH',
               time: nfadsData.createdAtIST
             },
-            'EC': { 
-              value: nfadsData.ec || 'N/A', 
+            'EC': {
+              value: nfadsData.ec || 'N/A',
               unit: 'mS/cm',
               time: nfadsData.createdAtIST
             },
-            'TDS': { 
-              value: nfadsData.tds || 'N/A', 
+            'TDS': {
+              value: nfadsData.tds || 'N/A',
               unit: 'ppm',
               time: nfadsData.createdAtIST
             },
-            'Water Temp': { 
-              value: nfadsData.waterTemp || 'N/A', 
+            'Water Temp': {
+              value: nfadsData.waterTemp || 'N/A',
               unit: '°C',
               time: nfadsData.createdAtIST
             },
-            'Flow Rate': { 
-              value: nfadsData.waterFlow || 'N/A', 
+            'Flow Rate': {
+              value: nfadsData.waterFlow || 'N/A',
               unit: 'L/min',
               time: nfadsData.createdAtIST
             }
           },
           deviceStates: {
-            'Water Pump': { 
+            'Water Pump': {
               value: nfadsData.waterPump || false,
               time: nfadsData.createdAtIST
             },
-            'Valve': { 
+            'Valve': {
               value: nfadsData.solenoidValve || false,
               time: nfadsData.createdAtIST
             },
-            'Pump A': { 
+            'Pump A': {
               value: nfadsData.peristalticPumpA || false,
               time: nfadsData.createdAtIST
             },
-            'Pump B': { 
+            'Pump B': {
               value: nfadsData.peristalticPumpB || false,
               time: nfadsData.createdAtIST
             },
-            'pH Up Pump': { 
+            'pH Up Pump': {
               value: nfadsData.peristalticPumpPhup || false,
               time: nfadsData.createdAtIST
             },
-            'pH Down Pump': { 
+            'pH Down Pump': {
               value: nfadsData.peristalticPumpPhdown || false,
               time: nfadsData.createdAtIST
             },
-            'Compressor': { 
+            'Compressor': {
               value: nfadsData.compressor || false,
               time: nfadsData.createdAtIST
             },
-            'Peltier': { 
+            'Peltier': {
               value: nfadsData.peltier || false,
               time: nfadsData.createdAtIST
             },
-            'OLED Display': { 
+            'OLED Display': {
               value: nfadsData.oled || false,
               time: nfadsData.createdAtIST
             }
@@ -333,16 +357,16 @@ export default function Home() {
 
   return isLoggedIn ? (
     <div className="min-h-screen bg-gray-900">
-      <Topbar 
+      <Topbar
         onRefresh={() => {
           const token = localStorage.getItem('token');
           if (token) fetchSystemData(token);
         }}
         onLogout={handleLogout}
         isRefreshing={isRefreshing}
-        lastRefresh={lastRefresh}
+        lastRefresh={lastRefresh ? lastRefresh.toLocaleTimeString() : null}
       />
-      
+
       <div className="max-w-7xl mx-auto p-4">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           <SystemCard
