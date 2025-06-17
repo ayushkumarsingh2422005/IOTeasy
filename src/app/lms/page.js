@@ -166,6 +166,15 @@ export default function LmsPage() {
       <div className="h-[calc(100vh-3.5rem)] grid grid-cols-12 gap-2 p-2">
         {/* Left Column - Sensor Selection */}
         <div className="col-span-2 bg-gray-800 rounded-lg p-2 flex flex-col gap-1">
+          <button
+            onClick={() => router.push('/lms/raw')}
+            className="mb-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors flex items-center justify-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+              <path d="M5 3a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2V5a2 2 0 00-2-2H5zM5 11a2 2 0 00-2 2v2a2 2 0 002 2h2a2 2 0 002-2v-2a2 2 0 00-2-2H5zM11 5a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V5zM11 13a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+            </svg>
+            View Raw Data
+          </button>
           {Object.entries(sensors).map(([key, { name, unit }]) => (
             <button
               key={key}
