@@ -30,7 +30,7 @@ export default function RawDataPage() {
     ];
 
     const csvData = data.map(item => [
-      item.createdAtIST,
+      item.createdAtIST.replace(',', ' -'),
       item.ph,
       item.ec,
       item.tds,
@@ -177,19 +177,19 @@ export default function RawDataPage() {
                 <thead className="text-xs uppercase bg-gray-700 text-gray-300 sticky top-0 z-10">
                   <tr>
                     <th className="px-6 py-3 bg-gray-700">Time</th>
-                    <th className="px-6 py-3 bg-gray-700">Temperature (°C)</th>
-                    <th className="px-6 py-3 bg-gray-700">Humidity (%)</th>
-                    <th className="px-6 py-3 bg-gray-700">CO₂ (ppm)</th>
-                    <th className="px-6 py-3 bg-gray-700">O₂ (%)</th>
-                    <th className="px-6 py-3 bg-gray-700">Pressure (kPa)</th>
-                    <th className="px-6 py-3 bg-gray-700">Light Intensity (lux)</th>
-                    <th className="px-6 py-3 bg-gray-700">Spectral (nm)</th>
-                    <th className="px-6 py-3 bg-gray-700">Ambient (lux)</th>
-                    <th className="px-6 py-3 bg-gray-700">LDR (Ω)</th>
-                    <th className="px-6 py-3 bg-gray-700">Exhaust Fan</th>
-                    <th className="px-6 py-3 bg-gray-700">Cooling System</th>
-                    <th className="px-6 py-3 bg-gray-700">Diaphragm Pump</th>
-                    <th className="px-6 py-3 bg-gray-700">Grow Light</th>
+                    <th className="px-6 py-3 bg-gray-700">pH Level (pH)</th>
+                    <th className="px-6 py-3 bg-gray-700">EC (mS/cm)</th>
+                    <th className="px-6 py-3 bg-gray-700">TDS (ppm)</th>
+                    <th className="px-6 py-3 bg-gray-700">Water Temp (°C)</th>
+                    <th className="px-6 py-3 bg-gray-700">Flow Rate (L/min)</th>
+                    <th className="px-6 py-3 bg-gray-700">Water Pump</th>
+                    <th className="px-6 py-3 bg-gray-700">Valve</th>
+                    <th className="px-6 py-3 bg-gray-700">Pump A</th>
+                    <th className="px-6 py-3 bg-gray-700">Pump B</th>
+                    <th className="px-6 py-3 bg-gray-700">pH Up Pump</th>
+                    <th className="px-6 py-3 bg-gray-700">pH Down Pump</th>
+                    <th className="px-6 py-3 bg-gray-700">Compressor</th>
+                    <th className="px-6 py-3 bg-gray-700">Peltier</th>
                     <th className="px-6 py-3 bg-gray-700">OLED Display</th>
                   </tr>
                 </thead>
