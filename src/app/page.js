@@ -19,10 +19,13 @@ const SystemCard = ({ title, description, sensorData, deviceStates, onClick }) =
     
     // Get the most recent timestamp from sensor data
     const timestamps = Object.values(sensorData).map(data => {
-      const dateStr = data.time.split(',')[1].trim();
-      return new Date(dateStr);
+      // data.time: "19/6/2025, 2:56:30 pm"
+      const [datePart, timePart] = data.time.split(',');
+      const [day, month, year] = datePart.trim().split('/').map(Number);
+      const dateString = `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')} ${timePart.trim()}`;
+      return new Date(dateString);
     });
-    
+
     const mostRecentTime = new Date(Math.max(...timestamps));
     const currentTime = new Date();
     const timeDiffInSeconds = (currentTime - mostRecentTime) / 1000;
