@@ -225,15 +225,16 @@ export default function Home() {
               value: lmsData.ldr || 'N/A',
               unit: 'Ω',
               time: lmsData.createdAtIST
+            },
+            'Dimmer': {
+              value: lmsData.dimmable || 'N/A',
+              unit: '0-100%',
+              time: lmsData.createdAtIST
             }
           },
           deviceStates: {
             'Grow Light': {
               value: lmsData.growLights || false,
-              time: lmsData.createdAtIST
-            },
-            'Dimmer': {
-              value: lmsData.dimmable || false,
               time: lmsData.createdAtIST
             },
             'OLED Display': {

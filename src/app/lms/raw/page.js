@@ -25,11 +25,11 @@ export default function RawDataPage() {
     const csvData = data.map(item => [
       item.createdAtIST,
       item.bh1750,
-      item.as7265x,
+      // item.as7265x,
       item.tsl2591,
       item.ldr,
       item.growLights ? 'ON' : 'OFF',
-      item.dimmable ? 'ON' : 'OFF',
+      item.dimmable,
       item.oled ? 'ON' : 'OFF'
     ]);
 
@@ -186,7 +186,7 @@ export default function RawDataPage() {
                       <tr key={item._id} className={`border-b border-gray-700 ${index % 2 === 0 ? 'bg-gray-800' : 'bg-gray-800/50'}`}>
                         <td className="px-6 py-4">{item.createdAtIST}</td>
                         <td className="px-6 py-4">{item.bh1750}</td>
-                        <td className="px-6 py-4">{item.as7265x}</td>
+                        {/* <td className="px-6 py-4">{item.as7265x}</td> */}
                         <td className="px-6 py-4">{item.tsl2591}</td>
                         <td className="px-6 py-4">{item.ldr}</td>
                         <td className="px-6 py-4">
@@ -195,9 +195,7 @@ export default function RawDataPage() {
                           </span>
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`px-2 py-1 rounded text-xs ${item.dimmable ? 'bg-green-900/50 text-green-100' : 'bg-gray-700/50 text-gray-400'}`}>
-                            {item.dimmable ? 'ON' : 'OFF'}
-                          </span>
+                          {item.dimmable}
                         </td>
                         <td className="px-6 py-4">
                           <span className={`px-2 py-1 rounded text-xs ${item.oled ? 'bg-green-900/50 text-green-100' : 'bg-gray-700/50 text-gray-400'}`}>

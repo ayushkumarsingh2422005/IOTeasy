@@ -17,11 +17,12 @@ const LmsSchema = new mongoose.Schema({
         type: Number, //
     },
     dimmable: {
-        type: Boolean, //
+        type: Number, //
     },
     oled: {
         type: Boolean, //
     }
 }, { timestamps: true });
+delete mongoose.models.Lms;
 
 export default mongoose.models.Lms || mongoose.model("Lms", LmsSchema);

@@ -50,14 +50,14 @@ export default function LmsPage() {
 
   const sensors = {
     bh1750: { name: 'Light Intensity', unit: 'lux' },
-    as7265x: { name: 'Spectral', unit: 'nm' },
+    // as7265x: { name: 'Spectral', unit: 'nm' },
     tsl2591: { name: 'Ambient', unit: 'lux' },
-    ldr: { name: 'LDR', unit: 'Ω' }
+    ldr: { name: 'LDR', unit: 'Ω' },
+    dimmable: { name: 'Dimmer', unit: '0-100%' }  
   };
 
   const devices = {
     growLights: 'Grow Light',
-    dimmable: 'Dimmer',
     oled: 'OLED Display'
   };
 
@@ -107,16 +107,16 @@ export default function LmsPage() {
         const processedData = historicalData.map(item => ({
           time: item.createdAtIST,
           bh1750: item.bh1750,
-          as7265x: item.as7265x,
+          // as7265x: item.as7265x,
           tsl2591: item.tsl2591,
           ldr: item.ldr,
+          dimmable: item.dimmable,
           createdAtIST: item.createdAtIST
         })).reverse();
 
         // Set recent device states
         const currentStates = {
           growLights: recentData.growLights,
-          dimmable: recentData.dimmable,
           oled: recentData.oled,
           createdAtIST: recentData.createdAtIST
         };
