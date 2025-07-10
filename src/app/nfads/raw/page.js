@@ -78,7 +78,7 @@ export default function RawDataPage() {
           return;
         }
 
-        const response = await fetch('/api/nfads', {
+        const response = await fetch('/api/nfads/all', {
           headers: {
             'Authorization': `Bearer ${token}`
           }

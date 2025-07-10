@@ -68,7 +68,7 @@ export default function RawDataPage() {
           return;
         }
 
-        const response = await fetch('/api/ems', {
+        const response = await fetch('/api/ems/all', {
           headers: {
             'Authorization': `Bearer ${token}`
           }

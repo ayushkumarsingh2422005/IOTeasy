@@ -64,7 +64,7 @@ export default function RawDataPage() {
           return;
         }
 
-        const response = await fetch('/api/lms', {
+        const response = await fetch('/api/lms/all', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
