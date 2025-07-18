@@ -5,7 +5,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useRouter } from 'next/navigation';
 import Topbar from '@/components/Topbar';
 
-const DeviceStatus = ({ name, status, lastUpdate }) => (
+const DeviceStatus = ({ name, status, lastActiveTime }) => (
   <div className={`flex items-center justify-between p-2 rounded-md ${status ? 'bg-green-900/20' : 'bg-gray-800'}`}>
     <div className="flex items-center space-x-2">
       <div className={`w-2 h-2 rounded-full ${status ? 'bg-green-500' : 'bg-gray-600'}`} />
@@ -17,9 +17,9 @@ const DeviceStatus = ({ name, status, lastUpdate }) => (
       }`}>
         {status ? 'ON' : 'OFF'}
       </span>
-      {lastUpdate && (
+      {lastActiveTime && (
         <span className="text-xs text-gray-500 ml-2">
-          {lastUpdate.split(',')[1].trim()}
+          {lastActiveTime.split(',')[1].trim()}
         </span>
       )}
     </div>
@@ -111,7 +111,6 @@ export default function NfadsPage() {
       const recentData = await recentResponse.json();
       
       // Process historical data for the chart
-      console.log(historicalData);
       const processedData = historicalData.map(item => ({
         time: item.createdAtIST,
         ph: item.ph,
@@ -122,22 +121,8 @@ export default function NfadsPage() {
         createdAtIST: item.createdAtIST
       })).reverse();
 
-      // Set recent device states
-      const currentStates = {
-        waterPump: recentData.waterPump,
-        solenoidValve: recentData.solenoidValve,
-        peristalticPumpA: recentData.peristalticPumpA,
-        peristalticPumpB: recentData.peristalticPumpB,
-        peristalticPumpPhup: recentData.peristalticPumpPhup,
-        peristalticPumpPhdown: recentData.peristalticPumpPhdown,
-        compressor: recentData.compressor,
-        peltier: recentData.peltier,
-        oled: recentData.oled,
-        createdAtIST: recentData.createdAtIST
-      };
-
       setData(processedData);
-      setDeviceStates(currentStates);
+      setDeviceStates(recentData);
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -165,7 +150,7 @@ export default function NfadsPage() {
           router.push('/');
         }}
         isRefreshing={isLoading}
-        lastRefresh={deviceStates?.createdAtIST}
+        lastRefresh={deviceStates?.lastUpdated}
       />
 
       <div className="h-[calc(100vh-3.5rem)] grid grid-cols-12 gap-2 p-2">
@@ -261,14 +246,18 @@ export default function NfadsPage() {
 
         {/* Right Column - Device Status */}
         <div className="col-span-2 bg-gray-800 rounded-lg p-2 flex flex-col gap-1">
-          {deviceStates && Object.entries(devices).map(([key, name]) => (
+          {deviceStates && deviceStates.deviceStatus && Object.entries(devices).map(([key, name]) => (
             <DeviceStatus
               key={key}
               name={name}
-              status={deviceStates[key]}
-              lastUpdate={deviceStates.createdAtIST}
+              status={deviceStates.deviceStatus[key]?.currentState || false}
+              lastActiveTime={deviceStates.deviceStatus[key]?.lastActiveTime}
             />
           ))}
+          <div className="mt-auto text-xs text-gray-500 text-center pt-2 border-t border-gray-700">
+            {deviceStates?.isDataCurrent ? 'Data is current' : 'Data is stale (>15 min old)'}
+            <div>Last update: {deviceStates?.lastUpdated?.split(',')[1].trim()}</div>
+          </div>
         </div>
       </div>
     </div>

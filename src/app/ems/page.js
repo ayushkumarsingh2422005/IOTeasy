@@ -5,7 +5,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { useRouter } from 'next/navigation';
 import Topbar from '@/components/Topbar';
 
-const DeviceStatus = ({ name, status, lastUpdate }) => (
+const DeviceStatus = ({ name, status, lastUpdate, lastActiveTime }) => (
   <div className={`flex items-center justify-between p-2 rounded-md ${status ? 'bg-green-900/20' : 'bg-gray-800'}`}>
     <div className="flex items-center space-x-2">
       <div className={`w-2 h-2 rounded-full ${status ? 'bg-green-500' : 'bg-gray-600'}`} />
@@ -17,9 +17,9 @@ const DeviceStatus = ({ name, status, lastUpdate }) => (
       }`}>
         {status ? 'ON' : 'OFF'}
       </span>
-      {lastUpdate && (
+      {lastActiveTime && (
         <span className="text-xs text-gray-500 ml-2">
-          {lastUpdate.split(',')[1].trim()}
+          {lastActiveTime.split(',')[1].trim()}
         </span>
       )}
     </div>
@@ -68,76 +68,67 @@ export default function EmsPage() {
     return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
   };
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const token = localStorage.getItem('token');
-        if (!token) {
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/');
+        return;
+      }
+
+      // Fetch historical data for graph
+      const historicalResponse = await fetch('/api/ems', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      // Fetch recent data for device states
+      const recentResponse = await fetch('/api/ems/recent', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      
+      if (!historicalResponse.ok || !recentResponse.ok) {
+        if (historicalResponse.status === 401 || recentResponse.status === 401) {
+          localStorage.removeItem('token');
           router.push('/');
           return;
         }
-
-        // Fetch historical data for graph
-        const historicalResponse = await fetch('/api/ems', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        // Fetch recent data for device states
-        const recentResponse = await fetch('/api/ems/recent', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-        
-        if (!historicalResponse.ok || !recentResponse.ok) {
-          if (historicalResponse.status === 401 || recentResponse.status === 401) {
-            localStorage.removeItem('token');
-            router.push('/');
-            return;
-          }
-          throw new Error('Failed to fetch data');
-        }
-        
-        const historicalData = await historicalResponse.json();
-        const recentData = await recentResponse.json();
-        
-        // Process historical data for the chart
-        const processedData = historicalData.map(item => ({
-          time: item.createdAtIST,
-          dht22Temp: item.dht22Temp,
-          dht22Moisture: item.dht22Moisture,
-          carbonDioxide: item.carbonDioxide,
-          oxygen: item.oxygen,
-          pressure: item.pressure,
-          createdAtIST: item.createdAtIST
-        })).reverse();
-
-        // Set recent device states
-        const currentStates = {
-          exhaustFan: recentData.exhaustFan,
-          indoorCooling: recentData.indoorCooling,
-          diaphragmPump: recentData.diaphragmPump,
-          oled: recentData.oled,
-          createdAtIST: recentData.createdAtIST
-        };
-
-        setData(processedData);
-        setDeviceStates(currentStates);
-        setError(null);
-      } catch (err) {
-        setError(err.message);
-        if (err.message.includes('unauthorized')) {
-          localStorage.removeItem('token');
-          router.push('/');
-        }
-      } finally {
-        setIsLoading(false);
+        throw new Error('Failed to fetch data');
       }
-    };
+      
+      const historicalData = await historicalResponse.json();
+      const recentData = await recentResponse.json();
+      
+      // Process historical data for the chart
+      const processedData = historicalData.map(item => ({
+        time: item.createdAtIST,
+        dht22Temp: item.dht22Temp,
+        dht22Moisture: item.dht22Moisture,
+        carbonDioxide: item.carbonDioxide,
+        oxygen: item.oxygen,
+        pressure: item.pressure,
+        createdAtIST: item.createdAtIST
+      })).reverse();
 
+      setData(processedData);
+      setDeviceStates(recentData);
+      setError(null);
+    } catch (err) {
+      setError(err.message);
+      if (err.message.includes('unauthorized')) {
+        localStorage.removeItem('token');
+        router.push('/');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
     const interval = setInterval(fetchData, 30000);
     return () => clearInterval(interval);
@@ -163,7 +154,7 @@ export default function EmsPage() {
           router.push('/');
         }}
         isRefreshing={isLoading}
-        lastRefresh={deviceStates?.createdAtIST}
+        lastRefresh={deviceStates?.lastUpdated}
       />
 
       <div className="h-[calc(100vh-3.5rem)] grid grid-cols-12 gap-2 p-2">
@@ -246,14 +237,18 @@ export default function EmsPage() {
 
         {/* Right Column - Device Status */}
         <div className="col-span-2 bg-gray-800 rounded-lg p-2 flex flex-col gap-1">
-          {deviceStates && Object.entries(devices).map(([key, name]) => (
+          {deviceStates && deviceStates.deviceStatus && Object.entries(devices).map(([key, name]) => (
             <DeviceStatus
               key={key}
               name={name}
-              status={deviceStates[key]}
-              lastUpdate={deviceStates.createdAtIST}
+              status={deviceStates.deviceStatus[key]?.currentState || false}
+              lastActiveTime={deviceStates.deviceStatus[key]?.lastActiveTime}
             />
           ))}
+          <div className="mt-auto text-xs text-gray-500 text-center pt-2 border-t border-gray-700">
+            {deviceStates?.isDataCurrent ? 'Data is current' : 'Data is stale (>15 min old)'}
+            <div>Last update: {deviceStates?.lastUpdated?.split(',')[1].trim()}</div>
+          </div>
         </div>
       </div>
     </div>
