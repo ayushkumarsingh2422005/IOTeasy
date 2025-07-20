@@ -40,12 +40,37 @@ const SensorButton = ({ name, isSelected, onClick, unit }) => (
   </button>
 );
 
+const DeviceActiveTime = ({ name, hours }) => (
+  <div className="flex items-center justify-between p-2 border-b border-gray-700">
+    <span className="text-xs text-gray-400">{name}</span>
+    <span className="text-xs font-medium text-blue-300">{hours} hrs</span>
+  </div>
+);
+
+const NotificationItem = ({ message, time, isNew }) => (
+  <div className={`p-2 border-b border-gray-700 ${isNew ? 'bg-blue-900/20' : ''}`}>
+    <div className="text-xs text-gray-300">{message}</div>
+    <div className="text-xs text-gray-500">{time}</div>
+  </div>
+);
+
 export default function LmsPage() {
   const [data, setData] = useState([]);
   const [deviceStates, setDeviceStates] = useState(null);
   const [selectedSensor, setSelectedSensor] = useState('bh1750');
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [notifications, setNotifications] = useState([
+    { message: "Light intensity dropped below 5000 lux", time: "11:20 AM", isNew: true },
+    { message: "UV levels normalized", time: "10:05 AM", isNew: false },
+    { message: "IR levels increased", time: "09:15 AM", isNew: false }
+  ]);
+  const [deviceActiveTime, setDeviceActiveTime] = useState({
+    growLight: "14.3",
+    uvLight: "6.5",
+    irLight: "8.2",
+    oled: "24.0"
+  });
   const router = useRouter();
 
   const sensors = {
@@ -128,7 +153,7 @@ export default function LmsPage() {
 
   useEffect(() => {
     fetchData();
-    const interval = setInterval(fetchData, 30000);
+    const interval = setInterval(fetchData, 900000);
     return () => clearInterval(interval);
   }, []);
 
@@ -154,7 +179,7 @@ export default function LmsPage() {
 
       <div className="h-[calc(100vh-3.5rem)] grid grid-cols-12 gap-2 p-2">
         {/* Left Column - Sensor Selection */}
-        <div className="col-span-2 bg-gray-800 rounded-lg p-2 flex flex-col gap-1">
+        <div className="col-span-2 bg-gray-800 rounded-lg p-2 flex flex-col">
           <button
             onClick={() => router.push('/lms/raw')}
             className="mb-2 px-3 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-500 transition-colors flex items-center justify-center gap-2"
@@ -177,6 +202,24 @@ export default function LmsPage() {
               {name} ({unit})
             </button>
           ))}
+          
+          {/* Notification Panel */}
+          <div className="mt-4 border-t border-gray-700 pt-2">
+            <div className="text-xs font-medium text-gray-400 mb-1 flex justify-between items-center">
+              <span>NOTIFICATIONS</span>
+              <span className="bg-blue-500 text-xs rounded-full px-1.5 py-0.5 text-white">{notifications.filter(n => n.isNew).length}</span>
+            </div>
+            <div className="overflow-y-auto max-h-40 rounded-md bg-gray-850">
+              {notifications.map((notification, index) => (
+                <NotificationItem 
+                  key={index}
+                  message={notification.message}
+                  time={notification.time}
+                  isNew={notification.isNew}
+                />
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Middle Column - Graph */}
@@ -207,13 +250,6 @@ export default function LmsPage() {
                   stroke="#9CA3AF"
                   fontSize={12}
                   tickMargin={10}
-                  label={{ 
-                    value: sensors[selectedSensor].unit,
-                    angle: -90,
-                    position: 'insideLeft',
-                    fill: '#9CA3AF',
-                    fontSize: 12
-                  }}
                 />
                 <Tooltip
                   contentStyle={{
@@ -223,7 +259,6 @@ export default function LmsPage() {
                   }}
                   labelStyle={{ color: '#9CA3AF' }}
                   itemStyle={{ color: '#60A5FA' }}
-                  formatter={(value) => [`${value} ${sensors[selectedSensor].unit}`, sensors[selectedSensor].name]}
                 />
                 <Line
                   type="monotone"
@@ -232,7 +267,6 @@ export default function LmsPage() {
                   strokeWidth={2}
                   dot={false}
                   activeDot={{ r: 4 }}
-                  name={sensors[selectedSensor].name}
                 />
               </LineChart>
             </ResponsiveContainer>
@@ -240,15 +274,32 @@ export default function LmsPage() {
         </div>
 
         {/* Right Column - Device Status */}
-        <div className="col-span-2 bg-gray-800 rounded-lg p-2 flex flex-col gap-1">
-          {deviceStates && deviceStates.deviceStatus && Object.entries(devices).map(([key, name]) => (
-            <DeviceStatus
-              key={key}
-              name={name}
-              status={deviceStates.deviceStatus[key]?.currentState || false}
-              lastActiveTime={deviceStates.deviceStatus[key]?.lastActiveTime}
-            />
-          ))}
+        <div className="col-span-2 bg-gray-800 rounded-lg p-2 flex flex-col">
+          {/* Device Status */}
+          <div className="text-xs font-medium text-gray-400 mb-1">DEVICE STATUS</div>
+          <div className="space-y-1 mb-4">
+            {deviceStates && deviceStates.deviceStatus && Object.entries(devices).map(([key, name]) => (
+              <DeviceStatus
+                key={key}
+                name={name}
+                status={deviceStates.deviceStatus[key]?.currentState || false}
+                lastActiveTime={deviceStates.deviceStatus[key]?.lastActiveTime}
+              />
+            ))}
+          </div>
+          
+          {/* Device Active Time */}
+          <div className="text-xs font-medium text-gray-400 mb-1 mt-3 border-t border-gray-700 pt-2">ACTIVE TIME TODAY</div>
+          <div className="space-y-0.5">
+            {Object.entries(devices).map(([key, name]) => (
+              <DeviceActiveTime
+                key={key}
+                name={name}
+                hours={deviceActiveTime[key]}
+              />
+            ))}
+          </div>
+          
           <div className="mt-auto text-xs text-gray-500 text-center pt-2 border-t border-gray-700">
             {deviceStates?.isDataCurrent ? 'Data is current' : 'Data is stale (>15 min old)'}
             <div>Last update: {deviceStates?.lastUpdated?.split(',')[1].trim()}</div>
