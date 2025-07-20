@@ -12,9 +12,8 @@ const DeviceStatus = ({ name, status, lastActiveTime }) => (
       <span className="text-sm text-gray-300">{name}</span>
     </div>
     <div className="flex items-center">
-      <span className={`text-xs px-1.5 py-0.5 rounded ${
-        status ? 'bg-green-900/50 text-green-100' : 'bg-gray-700/50 text-gray-400'
-      }`}>
+      <span className={`text-xs px-1.5 py-0.5 rounded ${status ? 'bg-green-900/50 text-green-100' : 'bg-gray-700/50 text-gray-400'
+        }`}>
         {status ? 'ON' : 'OFF'}
       </span>
       {lastActiveTime && (
@@ -29,11 +28,10 @@ const DeviceStatus = ({ name, status, lastActiveTime }) => (
 const SensorButton = ({ name, isSelected, onClick, unit }) => (
   <button
     onClick={onClick}
-    className={`w-full p-3 rounded-lg mb-2 text-left transition-colors ${
-      isSelected 
-        ? 'bg-blue-900 text-blue-100 border-l-4 border-blue-500' 
+    className={`w-full p-3 rounded-lg mb-2 text-left transition-colors ${isSelected
+        ? 'bg-blue-900 text-blue-100 border-l-4 border-blue-500'
         : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-    }`}
+      }`}
   >
     <div className="font-medium">{name}</div>
     <div className="text-xs opacity-75">Unit: {unit}</div>
@@ -78,7 +76,7 @@ export default function LmsPage() {
     // as7265x: { name: 'Spectral', unit: 'nm' },
     tsl2591: { name: 'Ambient', unit: 'lux' },
     ldr: { name: 'LDR', unit: 'Ω' },
-    dimmable: { name: 'Dimmer', unit: '0-100%' }  
+    dimmable: { name: 'Dimmer', unit: '0-100%' }
   };
 
   const devices = {
@@ -106,14 +104,14 @@ export default function LmsPage() {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       // Fetch recent data for device states
       const recentResponse = await fetch('/api/lms/recent', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
-      
+
       if (!historicalResponse.ok || !recentResponse.ok) {
         if (historicalResponse.status === 401 || recentResponse.status === 401) {
           localStorage.removeItem('token');
@@ -122,10 +120,10 @@ export default function LmsPage() {
         }
         throw new Error('Failed to fetch data');
       }
-      
+
       const historicalData = await historicalResponse.json();
       const recentData = await recentResponse.json();
-      
+
       // Process historical data for the chart
       const processedData = historicalData.map(item => ({
         time: item.createdAtIST,
@@ -167,7 +165,7 @@ export default function LmsPage() {
 
   return (
     <div className="min-h-screen bg-gray-900">
-      <Topbar 
+      <Topbar
         onRefresh={fetchData}
         onLogout={() => {
           localStorage.removeItem('token');
@@ -193,16 +191,15 @@ export default function LmsPage() {
             <button
               key={key}
               onClick={() => setSelectedSensor(key)}
-              className={`text-left px-2 py-1.5 rounded text-sm transition-colors ${
-                selectedSensor === key
+              className={`text-left px-2 py-1.5 rounded text-sm transition-colors ${selectedSensor === key
                   ? 'bg-blue-900/50 text-blue-100'
                   : 'text-gray-300 hover:bg-gray-700'
-              }`}
+                }`}
             >
               {name} ({unit})
             </button>
           ))}
-          
+
           {/* Notification Panel */}
           <div className="mt-4 border-t border-gray-700 pt-2">
             <div className="text-xs font-medium text-gray-400 mb-1 flex justify-between items-center">
@@ -211,7 +208,7 @@ export default function LmsPage() {
             </div>
             <div className="overflow-y-auto max-h-40 rounded-md bg-gray-850">
               {notifications.map((notification, index) => (
-                <NotificationItem 
+                <NotificationItem
                   key={index}
                   message={notification.message}
                   time={notification.time}
@@ -233,43 +230,75 @@ export default function LmsPage() {
               {error}
             </div>
           ) : (
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                <XAxis 
-                  dataKey="time"
-                  stroke="#9CA3AF"
-                  fontSize={10}
-                  tickMargin={10}
-                  angle={-90}
-                  textAnchor="end"
-                  height={120}
-                  interval={0}
-                />
-                <YAxis
-                  stroke="#9CA3AF"
-                  fontSize={12}
-                  tickMargin={10}
-                />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#1F2937',
-                    border: '1px solid #374151',
-                    borderRadius: '0.375rem',
+            <>
+              <div className="flex items-center gap-4 mb-2">
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1" htmlFor="start-time">
+                    Start Time
+                  </label>
+                  <input
+                    id="start-time"
+                    type="datetime-local"
+                    className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-400 mb-1" htmlFor="end-time">
+                    End Time
+                  </label>
+                  <input
+                    id="end-time"
+                    type="datetime-local"
+                    className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <button
+                  onClick={() => {
+                    console.log('Apply button clicked');
                   }}
-                  labelStyle={{ color: '#9CA3AF' }}
-                  itemStyle={{ color: '#60A5FA' }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey={selectedSensor}
-                  stroke="#60A5FA"
-                  strokeWidth={2}
-                  dot={false}
-                  activeDot={{ r: 4 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
+                  className="mt-5 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-500 text-xs font-medium transition-colors"
+                >
+                  Apply
+                </button>
+              </div>
+              <ResponsiveContainer width="100%" height="90%">
+                <LineChart data={data}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                  <XAxis
+                    dataKey="time"
+                    stroke="#9CA3AF"
+                    fontSize={10}
+                    tickMargin={10}
+                    angle={-90}
+                    textAnchor="end"
+                    height={120}
+                    interval={0}
+                  />
+                  <YAxis
+                    stroke="#9CA3AF"
+                    fontSize={12}
+                    tickMargin={10}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#1F2937',
+                      border: '1px solid #374151',
+                      borderRadius: '0.375rem',
+                    }}
+                    labelStyle={{ color: '#9CA3AF' }}
+                    itemStyle={{ color: '#60A5FA' }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey={selectedSensor}
+                    stroke="#60A5FA"
+                    strokeWidth={2}
+                    dot={false}
+                    activeDot={{ r: 4 }}
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            </>
           )}
         </div>
 
@@ -287,7 +316,7 @@ export default function LmsPage() {
               />
             ))}
           </div>
-          
+
           {/* Device Active Time */}
           <div className="text-xs font-medium text-gray-400 mb-1 mt-3 border-t border-gray-700 pt-2">ACTIVE TIME TODAY</div>
           <div className="space-y-0.5">
@@ -299,7 +328,7 @@ export default function LmsPage() {
               />
             ))}
           </div>
-          
+
           <div className="mt-auto text-xs text-gray-500 text-center pt-2 border-t border-gray-700">
             {deviceStates?.isDataCurrent ? 'Data is current' : 'Data is stale (>15 min old)'}
             <div>Last update: {deviceStates?.lastUpdated?.split(',')[1].trim()}</div>
@@ -308,4 +337,4 @@ export default function LmsPage() {
       </div>
     </div>
   );
-} 
+}
