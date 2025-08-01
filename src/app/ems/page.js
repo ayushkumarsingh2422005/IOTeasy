@@ -70,6 +70,10 @@ export default function EmsPage() {
     oled: "24.0"
   });
   const router = useRouter();
+  
+  // Set default time range to all time (empty values)
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
 
   const sensors = {
     dht22Temp: { name: 'Temperature', unit: '°C' },
@@ -101,7 +105,7 @@ export default function EmsPage() {
       }
 
       // Fetch historical data for graph
-      const historicalResponse = await fetch('/api/ems', {
+      const historicalResponse = await fetch(`/api/ems?startDate=${startDate}&endDate=${endDate}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -245,6 +249,8 @@ export default function EmsPage() {
                     id="start-time"
                     type="datetime-local"
                     className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
                   />
                 </div>
                 <div>
@@ -255,11 +261,13 @@ export default function EmsPage() {
                     id="end-time"
                     type="datetime-local"
                     className="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-xs text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
                   />
                 </div>
                 <button
                   onClick={() => {
-                    console.log('Apply button clicked');
+                    fetchData();
                   }}
                   className="mt-5 px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-500 text-xs font-medium transition-colors"
                 >
