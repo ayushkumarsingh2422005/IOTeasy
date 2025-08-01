@@ -69,3 +69,10 @@ export async function GET(req) {
     return Response.json({ error: err.message }, { status: 400 });
   }
 } 
+
+
+
+// GET /api/notification                    // Get all notifications
+// GET /api/notification?module=EMS         // Get EMS notifications only
+// GET /api/notification?limit=10           // Get latest 10 notifications
+// GET /api/notification?module=LMS&limit=5 // Get latest 5 LMS notifications
