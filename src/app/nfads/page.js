@@ -41,7 +41,9 @@ const SensorButton = ({ name, isSelected, onClick, unit }) => (
 const DeviceActiveTime = ({ name, hours }) => (
   <div className="flex items-center justify-between p-2 border-b border-gray-700">
     <span className="text-xs text-gray-400">{name}</span>
-    <span className="text-xs font-medium text-blue-300">{hours} hrs</span>
+    <span className="text-xs font-medium text-blue-300">
+      {parseFloat(hours) > 0 ? `${parseFloat(hours).toFixed(1)} hrs` : '0 hrs'}
+    </span>
   </div>
 );
 
@@ -64,11 +66,17 @@ export default function NfadsPage() {
     { message: "pH level increased to 6.5", time: "09:30 AM", isNew: false }
   ]);
   const [deviceActiveTime, setDeviceActiveTime] = useState({
-    waterPump: "8.5",
-    nutrientPump: "3.2",
-    phPump: "1.5",
-    oled: "24.0"
+    waterPump: "0",
+    solenoidValve: "0",
+    peristalticPumpA: "0",
+    peristalticPumpB: "0",
+    peristalticPumpPhup: "0",
+    peristalticPumpPhdown: "0",
+    compressor: "0",
+    peltier: "0",
+    oled: "0"
   });
+  const [activeTimeRange, setActiveTimeRange] = useState("All Time");
   const router = useRouter();
   
   // Set default time range to all time (empty values)
@@ -98,6 +106,55 @@ export default function NfadsPage() {
   const formatDateTime = (timestamp) => {
     const date = new Date(timestamp);
     return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+  };
+
+  const fetchActiveTimeData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      let sensorUrl = '/api/nfads/sensor';
+      let rangeLabel = "All Time";
+
+      // If dates are selected, use them for the query
+      if (startDate && endDate) {
+        const startISO = new Date(startDate).toISOString();
+        const endISO = new Date(endDate).toISOString();
+        sensorUrl += `?startDate=${encodeURIComponent(startISO)}&endDate=${encodeURIComponent(endISO)}`;
+        
+        // Format range label
+        const startFormatted = new Date(startDate).toLocaleDateString();
+        const endFormatted = new Date(endDate).toLocaleDateString();
+        rangeLabel = `${startFormatted} - ${endFormatted}`;
+      }
+
+      const sensorResponse = await fetch(sensorUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (sensorResponse.ok) {
+        const sensorData = await sensorResponse.json();
+        
+        // Update device active time with hours data
+        setDeviceActiveTime({
+          waterPump: sensorData.activeTimeHours?.waterPump?.toString() || "0",
+          solenoidValve: sensorData.activeTimeHours?.solenoidValve?.toString() || "0",
+          peristalticPumpA: sensorData.activeTimeHours?.peristalticPumpA?.toString() || "0",
+          peristalticPumpB: sensorData.activeTimeHours?.peristalticPumpB?.toString() || "0",
+          peristalticPumpPhup: sensorData.activeTimeHours?.peristalticPumpPhup?.toString() || "0",
+          peristalticPumpPhdown: sensorData.activeTimeHours?.peristalticPumpPhdown?.toString() || "0",
+          compressor: sensorData.activeTimeHours?.compressor?.toString() || "0",
+          peltier: sensorData.activeTimeHours?.peltier?.toString() || "0",
+          oled: sensorData.activeTimeHours?.oled?.toString() || "0"
+        });
+        
+        setActiveTimeRange(rangeLabel);
+      }
+    } catch (err) {
+      console.error('Error fetching NFADS active time data:', err);
+    }
   };
 
   const fetchData = async () => {
@@ -150,6 +207,10 @@ export default function NfadsPage() {
 
       setData(processedData);
       setDeviceStates(recentData);
+      
+      // Fetch active time data
+      await fetchActiveTimeData();
+      
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -273,6 +334,16 @@ export default function NfadsPage() {
                 >
                   Apply
                 </button>
+                <button
+                  onClick={() => {
+                    setStartDate('');
+                    setEndDate('');
+                    fetchData();
+                  }}
+                  className="mt-5 px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-500 text-xs font-medium transition-colors"
+                >
+                  Clear
+                </button>
               </div>
               <ResponsiveContainer width="100%" height="90%">
                 <LineChart data={data}>
@@ -340,7 +411,9 @@ export default function NfadsPage() {
           </div>
 
           {/* Device Active Time */}
-          <div className="text-xs font-medium text-gray-400 mb-1 mt-3 border-t border-gray-700 pt-2">ACTIVE TIME TODAY</div>
+          <div className="text-xs font-medium text-gray-400 mb-1 mt-3 border-t border-gray-700 pt-2">
+            ACTIVE TIME ({activeTimeRange})
+          </div>
           <div className="space-y-0.5">
             {Object.entries(devices).map(([key, name]) => (
               <DeviceActiveTime

@@ -41,7 +41,9 @@ const SensorButton = ({ name, isSelected, onClick, unit }) => (
 const DeviceActiveTime = ({ name, hours }) => (
   <div className="flex items-center justify-between p-2 border-b border-gray-700">
     <span className="text-xs text-gray-400">{name}</span>
-    <span className="text-xs font-medium text-blue-300">{hours} hrs</span>
+    <span className="text-xs font-medium text-blue-300">
+      {parseFloat(hours) > 0 ? `${parseFloat(hours).toFixed(1)} hrs` : '0 hrs'}
+    </span>
   </div>
 );
 
@@ -64,11 +66,12 @@ export default function EmsPage() {
     { message: "Humidity dropped below 40%", time: "08:15 AM", isNew: false }
   ]);
   const [deviceActiveTime, setDeviceActiveTime] = useState({
-    exhaustFan: "12.5",
-    indoorCooling: "8.2",
-    diaphragmPump: "5.7",
-    oled: "24.0"
+    exhaustFan: "0",
+    indoorCooling: "0",
+    diaphragmPump: "0",
+    oled: "0"
   });
+  const [activeTimeRange, setActiveTimeRange] = useState("All Time");
   const router = useRouter();
   
   // Set default time range to all time (empty values)
@@ -93,6 +96,53 @@ export default function EmsPage() {
   const formatDateTime = (timestamp) => {
     const date = new Date(timestamp);
     return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+  };
+
+  const fetchActiveTimeData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      let sensorUrl = '/api/ems/sensor';
+      let rangeLabel = "All Time";
+
+      // If dates are selected, use them for the query
+      if (startDate && endDate) {
+        const startISO = new Date(startDate).toISOString();
+        const endISO = new Date(endDate).toISOString();
+        sensorUrl += `?startDate=${encodeURIComponent(startISO)}&endDate=${encodeURIComponent(endISO)}`;
+        
+        // Format range label
+        const startFormatted = new Date(startDate).toLocaleDateString();
+        const endFormatted = new Date(endDate).toLocaleDateString();
+        rangeLabel = `${startFormatted} - ${endFormatted}`;
+      }
+
+      const sensorResponse = await fetch(sensorUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (sensorResponse.ok) {
+        const sensorData = await sensorResponse.json();
+        console.log('Sensor data received:', sensorData);
+        
+        // Update device active time with hours data
+        setDeviceActiveTime({
+          exhaustFan: sensorData.activeTimeHours?.exhaustFan?.toString() || "0",
+          indoorCooling: sensorData.activeTimeHours?.indoorCooling?.toString() || "0",
+          diaphragmPump: sensorData.activeTimeHours?.diaphragmPump?.toString() || "0",
+          oled: sensorData.activeTimeHours?.oled?.toString() || "0"
+        });
+        
+        setActiveTimeRange(rangeLabel);
+      } else {
+        console.error('Sensor response not ok:', sensorResponse.status, await sensorResponse.text());
+      }
+    } catch (err) {
+      console.error('Error fetching active time data:', err);
+    }
   };
 
   const fetchData = async () => {
@@ -143,6 +193,10 @@ export default function EmsPage() {
 
       setData(processedData);
       setDeviceStates(recentData);
+      
+      // Fetch active time data
+      await fetchActiveTimeData();
+      
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -273,6 +327,16 @@ export default function EmsPage() {
                 >
                   Apply
                 </button>
+                <button
+                  onClick={() => {
+                    setStartDate('');
+                    setEndDate('');
+                    fetchData();
+                  }}
+                  className="mt-5 px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-500 text-xs font-medium transition-colors"
+                >
+                  Clear
+                </button>
               </div>
               <ResponsiveContainer width="100%" height="90%">
                 <LineChart data={data}>
@@ -331,7 +395,9 @@ export default function EmsPage() {
           </div>
 
           {/* Device Active Time */}
-          <div className="text-xs font-medium text-gray-400 mb-1 mt-3 border-t border-gray-700 pt-2">ACTIVE TIME TODAY</div>
+          <div className="text-xs font-medium text-gray-400 mb-1 mt-3 border-t border-gray-700 pt-2">
+            ACTIVE TIME ({activeTimeRange})
+          </div>
           <div className="space-y-0.5">
             {Object.entries(devices).map(([key, name]) => (
               <DeviceActiveTime

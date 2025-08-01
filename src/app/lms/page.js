@@ -41,7 +41,9 @@ const SensorButton = ({ name, isSelected, onClick, unit }) => (
 const DeviceActiveTime = ({ name, hours }) => (
   <div className="flex items-center justify-between p-2 border-b border-gray-700">
     <span className="text-xs text-gray-400">{name}</span>
-    <span className="text-xs font-medium text-blue-300">{hours} hrs</span>
+    <span className="text-xs font-medium text-blue-300">
+      {parseFloat(hours) > 0 ? `${parseFloat(hours).toFixed(1)} hrs` : '0 hrs'}
+    </span>
   </div>
 );
 
@@ -64,11 +66,10 @@ export default function LmsPage() {
     { message: "IR levels increased", time: "09:15 AM", isNew: false }
   ]);
   const [deviceActiveTime, setDeviceActiveTime] = useState({
-    growLight: "14.3",
-    uvLight: "6.5",
-    irLight: "8.2",
-    oled: "24.0"
+    growLights: "0",
+    oled: "0"
   });
+  const [activeTimeRange, setActiveTimeRange] = useState("All Time");
   const router = useRouter();
   
   // Set default time range to all time (empty values)
@@ -91,6 +92,48 @@ export default function LmsPage() {
   const formatDateTime = (timestamp) => {
     const date = new Date(timestamp);
     return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+  };
+
+  const fetchActiveTimeData = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      let sensorUrl = '/api/lms/sensor';
+      let rangeLabel = "All Time";
+
+      // If dates are selected, use them for the query
+      if (startDate && endDate) {
+        const startISO = new Date(startDate).toISOString();
+        const endISO = new Date(endDate).toISOString();
+        sensorUrl += `?startDate=${encodeURIComponent(startISO)}&endDate=${encodeURIComponent(endISO)}`;
+        
+        // Format range label
+        const startFormatted = new Date(startDate).toLocaleDateString();
+        const endFormatted = new Date(endDate).toLocaleDateString();
+        rangeLabel = `${startFormatted} - ${endFormatted}`;
+      }
+
+      const sensorResponse = await fetch(sensorUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (sensorResponse.ok) {
+        const sensorData = await sensorResponse.json();
+        
+        // Update device active time with hours data
+        setDeviceActiveTime({
+          growLights: sensorData.activeTimeHours?.growLights?.toString() || "0",
+          oled: sensorData.activeTimeHours?.oled?.toString() || "0"
+        });
+        
+        setActiveTimeRange(rangeLabel);
+      }
+    } catch (err) {
+      console.error('Error fetching LMS active time data:', err);
+    }
   };
 
   const fetchData = async () => {
@@ -141,6 +184,10 @@ export default function LmsPage() {
 
       setData(processedData);
       setDeviceStates(recentData);
+      
+      // Fetch active time data
+      await fetchActiveTimeData();
+      
       setError(null);
     } catch (err) {
       setError(err.message);
@@ -268,6 +315,16 @@ export default function LmsPage() {
                 >
                   Apply
                 </button>
+                <button
+                  onClick={() => {
+                    setStartDate('');
+                    setEndDate('');
+                    fetchData();
+                  }}
+                  className="mt-5 px-3 py-1 bg-gray-600 text-white rounded hover:bg-gray-500 text-xs font-medium transition-colors"
+                >
+                  Clear
+                </button>
               </div>
               <ResponsiveContainer width="100%" height="90%">
                 <LineChart data={data}>
@@ -326,7 +383,9 @@ export default function LmsPage() {
           </div>
 
           {/* Device Active Time */}
-          <div className="text-xs font-medium text-gray-400 mb-1 mt-3 border-t border-gray-700 pt-2">ACTIVE TIME TODAY</div>
+          <div className="text-xs font-medium text-gray-400 mb-1 mt-3 border-t border-gray-700 pt-2">
+            ACTIVE TIME ({activeTimeRange})
+          </div>
           <div className="space-y-0.5">
             {Object.entries(devices).map(([key, name]) => (
               <DeviceActiveTime
