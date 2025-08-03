@@ -343,7 +343,7 @@ export default function Home() {
             onClick={() => handleSystemClick('lms')}
           />
           <SystemCard
-            title="Nutrient Fertilizer and Dosing System (NFADS)"
+            title="Nutrient Flow Automation & Dosing System (NFADS)"
             description="Nutrient and water management system for pH, EC, TDS monitoring and automated dosing."
             sensorData={systemData.nfads?.sensorData || {}}
             deviceStates={systemData.nfads?.deviceStates || {}}
