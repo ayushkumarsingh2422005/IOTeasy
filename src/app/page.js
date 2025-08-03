@@ -323,7 +323,7 @@ export default function Home() {
         }}
         onLogout={handleLogout}
         isRefreshing={isRefreshing}
-        lastRefresh={lastRefresh ? lastRefresh.toLocaleTimeString() : null}
+        lastRefresh={lastRefresh ? lastRefresh.toLocaleString() : null}
       />
 
       <div className="max-w-7xl mx-auto p-4">
