@@ -203,17 +203,17 @@ export default function Home() {
         },
         lms: {
           sensorData: {
-            'Light Intensity': {
+            'BH1750': {
               value: lmsData.sensorData?.bh1750 || 'N/A',
               unit: 'lux',
               time: lmsData.lastUpdated
             },
-            'Spectral': {
+            'AS7265X': {
               value: lmsData.sensorData?.as7265x || 'N/A',
               unit: 'nm',
               time: lmsData.lastUpdated
             },
-            'Ambient': {
+            'TSL2591': {
               value: lmsData.sensorData?.tsl2591 || 'N/A',
               unit: 'lux',
               time: lmsData.lastUpdated
