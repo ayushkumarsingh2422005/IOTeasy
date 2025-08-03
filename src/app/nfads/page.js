@@ -415,13 +415,15 @@ export default function NfadsPage() {
             ACTIVE TIME ({activeTimeRange})
           </div>
           <div className="space-y-0.5">
-            {Object.entries(devices).map(([key, name]) => (
+            {Object.entries(devices).map(([key, name]) => {
+              if(key === 'oled') return null; 
+              return (
               <DeviceActiveTime
                 key={key}
                 name={name}
                 hours={deviceActiveTime[key]}
               />
-            ))}
+            )})}
           </div>
 
           <div className="mt-auto text-xs text-gray-500 text-center pt-2 border-t border-gray-700">
