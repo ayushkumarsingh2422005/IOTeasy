@@ -67,7 +67,7 @@ export default function LmsPage() {
   ]);
   const [deviceActiveTime, setDeviceActiveTime] = useState({
     growLights: "0",
-    oled: "0"
+    // oled: "0"
   });
   const [activeTimeRange, setActiveTimeRange] = useState("All Time");
   const router = useRouter();
@@ -126,7 +126,7 @@ export default function LmsPage() {
         // Update device active time with hours data
         setDeviceActiveTime({
           growLights: sensorData.activeTimeHours?.growLights?.toString() || "0",
-          oled: sensorData.activeTimeHours?.oled?.toString() || "0"
+          // oled: sensorData.activeTimeHours?.oled?.toString() || "0"
         });
         
         setActiveTimeRange(rangeLabel);

@@ -69,7 +69,7 @@ export default function EmsPage() {
     exhaustFan: "0",
     indoorCooling: "0",
     diaphragmPump: "0",
-    oled: "0"
+    // oled: "0"
   });
   const [activeTimeRange, setActiveTimeRange] = useState("All Time");
   const router = useRouter();
@@ -133,7 +133,7 @@ export default function EmsPage() {
           exhaustFan: sensorData.activeTimeHours?.exhaustFan?.toString() || "0",
           indoorCooling: sensorData.activeTimeHours?.indoorCooling?.toString() || "0",
           diaphragmPump: sensorData.activeTimeHours?.diaphragmPump?.toString() || "0",
-          oled: sensorData.activeTimeHours?.oled?.toString() || "0"
+          // oled: sensorData.activeTimeHours?.oled?.toString() || "0"
         });
         
         setActiveTimeRange(rangeLabel);

@@ -74,7 +74,7 @@ export default function NfadsPage() {
     peristalticPumpPhdown: "0",
     compressor: "0",
     peltier: "0",
-    oled: "0"
+    // oled: "0"
   });
   const [activeTimeRange, setActiveTimeRange] = useState("All Time");
   const router = useRouter();
@@ -147,7 +147,7 @@ export default function NfadsPage() {
           peristalticPumpPhdown: sensorData.activeTimeHours?.peristalticPumpPhdown?.toString() || "0",
           compressor: sensorData.activeTimeHours?.compressor?.toString() || "0",
           peltier: sensorData.activeTimeHours?.peltier?.toString() || "0",
-          oled: sensorData.activeTimeHours?.oled?.toString() || "0"
+          // oled: sensorData.activeTimeHours?.oled?.toString() || "0"
         });
         
         setActiveTimeRange(rangeLabel);
