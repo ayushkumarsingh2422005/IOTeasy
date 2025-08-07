@@ -83,12 +83,12 @@ const SystemCard = ({ title, description, sensorData, deviceStates, onClick }) =
       {/* Device States */}
       {deviceStates && Object.keys(deviceStates).length > 0 && <div>
         <h3 className="text-xs font-semibold text-gray-400 mb-2">Device States</h3>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-3 gap-2 capitalize">
           {Object.entries(deviceStates).map(([key, data], index) => (
             <div key={index} className="flex justify-between bg-gray-900 px-2 rounded flex-col py-1">
               <div>
                 <span className="text-xs text-gray-300">{key}</span>
-                <p className="text-xs text-gray-500">
+                <p className="text-xs text-gray-500 lowercase">
                   {data.lastActiveTime ? data.lastActiveTime.split(',')[1].trim() : 'Never'}
                 </p>
               </div>
