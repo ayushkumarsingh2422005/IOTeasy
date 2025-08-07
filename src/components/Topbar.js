@@ -7,7 +7,12 @@ export default function Topbar({ onRefresh, onLogout, isRefreshing, lastRefresh 
   const pathname = usePathname();
 
   const isActive = (path) => {
-    return pathname === path ? 'bg-gradient-to-r from-blue-900 to-blue-800 text-blue-100 border-blue-500' : 'text-gray-300 hover:bg-gray-800 hover:text-gray-100 border-transparent';
+    // For root path, only match exact '/'
+    if (path === '/') {
+      return pathname === path ? 'bg-gradient-to-r from-blue-900 to-blue-800 text-blue-100 border-blue-500' : 'text-gray-300 hover:bg-gray-800 hover:text-gray-100 border-transparent';
+    }
+    // For other paths, check if pathname starts with the path (to handle nested routes)
+    return pathname === path || pathname.startsWith(path + '/') ? 'bg-gradient-to-r from-blue-900 to-blue-800 text-blue-100 border-blue-500' : 'text-gray-300 hover:bg-gray-800 hover:text-gray-100 border-transparent';
   };
 
   return (

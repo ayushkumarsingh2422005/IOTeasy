@@ -41,10 +41,10 @@ export async function GET() {
         currentState: isActive ? latestData.peristalticPumpB : false,
         lastActiveTime: null
       },
-      peristalticPumpPhdown: { 
-        currentState: isActive ? latestData.peristalticPumpPhdown : false,
-        lastActiveTime: null
-      },
+      // peristalticPumpPhdown: { 
+      //   currentState: isActive ? latestData.peristalticPumpPhdown : false,
+      //   lastActiveTime: null
+      // },
       peristalticPumpPhup: { 
         currentState: isActive ? latestData.peristalticPumpPhup : false,
         lastActiveTime: null
@@ -60,9 +60,13 @@ export async function GET() {
     };
 
     // Find last active time for each device
+    // const devices = [
+    //   'compressor', 'oled', 'peltier', 'peristalticPumpA', 'peristalticPumpB',
+    //   'peristalticPumpPhdown', 'peristalticPumpPhup', 'solenoidValve', 'waterPump'
+    // ];
     const devices = [
       'compressor', 'oled', 'peltier', 'peristalticPumpA', 'peristalticPumpB',
-      'peristalticPumpPhdown', 'peristalticPumpPhup', 'solenoidValve', 'waterPump'
+      'peristalticPumpPhup', 'solenoidValve', 'waterPump'
     ];
     
     for (const device of devices) {
