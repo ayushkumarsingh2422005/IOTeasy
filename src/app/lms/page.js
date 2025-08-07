@@ -77,9 +77,9 @@ export default function LmsPage() {
   const [endDate, setEndDate] = useState('');
 
   const sensors = {
-    bh1750: { name: 'Light Intensity', unit: 'lux' },
-    // as7265x: { name: 'Spectral', unit: 'nm' },
-    tsl2591: { name: 'Ambient', unit: 'lux' },
+    bh1750: { name: 'bh1750', unit: 'lux' },
+    as7265x: { name: 'as7265x', unit: 'nm' },
+    tsl2591: { name: 'tsl2591', unit: 'lux' },
     ldr: { name: 'LDR', unit: 'Ω' },
     dimmable: { name: 'Dimmer', unit: '0-100%' }
   };
