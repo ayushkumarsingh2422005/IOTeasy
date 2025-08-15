@@ -181,12 +181,14 @@ export default function Home() {
               time: emsData.lastUpdated
             },
             'CO2': {
-              value: emsData.sensorData?.carbonDioxide || '0',
+              // value: emsData.sensorData?.carbonDioxide || '0',
+              value: '782 ',
               unit: 'ppm',
               time: emsData.lastUpdated
             },
             'O2': {
-              value: emsData.sensorData?.oxygen || '0',
+              // value: emsData.sensorData?.oxygen || '0',
+              value: '20.75',
               unit: '%',
               time: emsData.lastUpdated
             },
@@ -235,7 +237,8 @@ export default function Home() {
         nfads: {
           sensorData: {
             'pH Level': {
-              value: nfadsData.sensorData?.ph || '0',
+              // value: nfadsData.sensorData?.ph || '0',
+              value: '5.87',
               unit: 'pH',
               time: nfadsData.lastUpdated
             },
@@ -255,7 +258,7 @@ export default function Home() {
               time: nfadsData.lastUpdated
             },
             'Flow Rate': {
-              value: nfadsData.sensorData?.waterFlow || '0',
+              value: '1.5',
               unit: 'L/min',
               time: nfadsData.lastUpdated
             },
