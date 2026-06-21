@@ -107,9 +107,12 @@ const SystemCard = ({ title, description, sensorData, deviceStates, onClick }) =
   );
 };
 
+const DEV_USERNAME = 'admin';
+const DEV_PASSWORD = '1234';
+
 export default function Home() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [username, setUsername] = useState(DEV_USERNAME);
+  const [password, setPassword] = useState(DEV_PASSWORD);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [error, setError] = useState('');
   const [systemData, setSystemData] = useState({
@@ -355,7 +358,7 @@ export default function Home() {
       </div>
     </div>
   ) : (
-    <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+    <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center">
       <div className="max-w-md w-full bg-gray-800 rounded-xl p-8 border border-gray-700">
         <h1 className="text-2xl font-bold text-center mb-8 text-gray-100">Hydroponics Dashboard</h1>
         {error && (
@@ -395,6 +398,11 @@ export default function Home() {
             Login
           </button>
         </form>
+        <p className="mt-6 text-center text-xs text-gray-500">
+          Username: <span className="text-gray-400">{DEV_USERNAME}</span>
+          {' · '}
+          Password: <span className="text-gray-400">{DEV_PASSWORD}</span>
+        </p>
       </div>
     </div>
   );
